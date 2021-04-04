@@ -7,7 +7,8 @@ const inputDistance = document.querySelector('.form__input--distance');
 const inputDuration = document.querySelector('.form__input--duration');
 const inputCadence = document.querySelector('.form__input--cadence');
 const inputElevation = document.querySelector('.form__input--elevation');
-const btnDelete = document.querySelector('.fa-trash-alt');
+const btnDelete = document.querySelector('.delete');
+const btnDeleteAll = document.querySelector('.delete__all');
 
 class Workout {
   date = new Date();
@@ -74,6 +75,7 @@ class App {
     inputType.addEventListener('change', this._toggleElevationField);
     containerWorkouts.addEventListener('click', this._moveToPopup.bind(this));
     btnDelete.addEventListener('click', this._deleteWorkout.bind(this));
+    btnDeleteAll.addEventListener('click', this._deleteAllWorkout.bind(this));
   }
 
   _getPosition() {
@@ -167,6 +169,9 @@ class App {
   }
 
   _renderWorkout(workout) {
+    // const work = sort
+    //   ? workout.sort((a, b) => a.distance - b.distance)
+    //   : workout;
     let html = `
     <li class="workout workout--${workout.type}" data-id="${workout.id}">
           <h2 class="workout__title">${workout.description}</h2>
@@ -280,17 +285,13 @@ class App {
 
   _deleteWorkout(e) {
     e.preventDefault();
-    // const workoutEl = e.target.closest('.workout');
-    // const index = this.#workout.findIndex(
-    //   work => work.id === workoutEl.dataset.id
-    // );
-    // console.log(index);
     this.#workout.splice(0, 1);
     this._setLocalStorage();
     location.reload();
   }
 
-  reset() {
+  _deleteAllWorkout() {
+    this.#workout = [];
     localStorage.removeItem('workouts');
     location.reload();
   }
