@@ -35,9 +35,10 @@ body {
 }
 
 /* GENERAL */
-a:link,
-a:visited {
-  color: var(--color-brand--1);
+a {
+  text-decoration: none;
+  color: var(--color-light--1);
+  font-size: 1.2rem;
 }
 
 /* SIDEBAR */
@@ -173,9 +174,14 @@ a:visited {
 
 .copyright {
   margin-top: auto;
+  margin-bottom: 1rem;
   font-size: 1.3rem;
   text-align: center;
   color: var(--color-light--1);
+}
+
+.copyright a {
+  text-decoration: underline;
 }
 
 .twitter-link:link,
@@ -187,6 +193,20 @@ a:visited {
 .twitter-link:hover,
 .twitter-link:active {
   color: var(--color-light--2);
+}
+
+.Feature__btn {
+  display: flex;
+  justify-content: space-between;
+}
+
+.socials {
+  display: flex;
+  margin: 0 auto;
+}
+
+.social + .social {
+  margin-left: 1rem;
 }
 
 /* MAP */
