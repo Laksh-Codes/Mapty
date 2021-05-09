@@ -1,5 +1,6 @@
 'use strict';
 
+const API_KEY = '581f32242da3c91ea019cd8a57216c46';
 const form = document.querySelector('.form');
 const containerWorkouts = document.querySelector('.workouts');
 const inputType = document.querySelector('.form__input--type');
@@ -14,10 +15,11 @@ class Workout {
   date = new Date();
   id = (Date.now() + '').slice(-5);
 
-  constructor(distance, duration, coords) {
+  constructor(distance, duration, coords, temperature) {
     this.distance = distance;
     this.duration = duration;
     this.coords = coords;
+    this.temperature = temperature;
   }
 
   _setDescription() {
@@ -32,8 +34,8 @@ class Workout {
 
 class Running extends Workout {
   type = 'running';
-  constructor(distance, duration, coords, cadence) {
-    super(distance, duration, coords);
+  constructor(distance, duration, coords, temperature, cadence) {
+    super(distance, duration, coords, temperature);
     this.cadence = cadence;
     this.calcPace();
     this._setDescription();
@@ -47,8 +49,8 @@ class Running extends Workout {
 
 class Cycling extends Workout {
   type = 'cycling';
-  constructor(distance, duration, coords, elevationGain) {
-    super(distance, duration, coords);
+  constructor(distance, duration, coords, temperature, elevationGain) {
+    super(distance, duration, coords, temperature);
     this.elevationGain = elevationGain;
     this.calcSpeed();
     this._setDescription();
@@ -92,7 +94,7 @@ class App {
   _loadMap(position) {
     const { latitude } = position.coords;
     const { longitude } = position.coords;
-    // console.log(`https://www.google.com/maps/@${latitude},${longitude}`);
+    // console.log(`https://www.google.com/maps/@${latitude},${longitude}`)`1q455re444`2  `q;
 
     const coords = [latitude, longitude];
 
@@ -119,7 +121,7 @@ class App {
     inputElevation.closest('.form__row').classList.toggle('form__row--hidden');
   }
 
-  _newWorkout(e) {
+  async _newWorkout(e) {
     const validInputs = (...inputs) =>
       inputs.every(inp => Number.isFinite(inp));
     const allPositive = (...inputs) => inputs.every(inp => inp > 0);
@@ -130,6 +132,9 @@ class App {
     const distance = +inputDistance.value;
     const duration = +inputDuration.value;
     const { lat, lng } = this.#mapEvent.latlng;
+    const data = await this._getwheather(lat, lng);
+    const temperature = data.main.temp;
+    console.log(data.main.temp);
     let workout;
 
     if (type === 'running') {
@@ -141,7 +146,13 @@ class App {
       )
         return alert('Inputs have to be positive numbers!');
 
-      workout = new Running(distance, duration, [lat, lng], cadence);
+      workout = new Running(
+        distance,
+        duration,
+        [lat, lng],
+        temperature,
+        cadence
+      );
     }
 
     if (type === 'cycling') {
@@ -154,7 +165,13 @@ class App {
         return alert('Inputs have to be positive numbers!');
       }
 
-      workout = new Cycling(distance, duration, [lat, lng], elevation);
+      workout = new Cycling(
+        distance,
+        duration,
+        [lat, lng],
+        temperature,
+        elevation
+      );
     }
 
     this.#workout.push(workout);
@@ -165,15 +182,18 @@ class App {
 
     this._hideForm();
 
-    this._setLocalStorage();
+    this._setLocalStorage('workouts', this.#workout);
   }
 
   _renderWorkout(workout) {
     // const work = sort
     //   ? workout.sort((a, b) => a.distance - b.distance)
     //   : workout;
-    let html = `
-    <li class="workout workout--${workout.type}" data-id="${workout.id}">
+    let html = ` 
+    <li class="workout workout--${workout.type}" data-id="${workout.id}"> 
+          <h2>${
+            Math.round(workout.temperature) > 30 ? '🌞' : '⛅'
+          }  ${Math.round(workout.temperature)}&#8451</h2>
           <h2 class="workout__title">${workout.description}</h2>
           <div class="workout__details">
             <span class="workout__icon">${
@@ -222,7 +242,7 @@ class App {
     form.insertAdjacentHTML('afterend', html);
   }
 
-  _renderWorkoutMaker(workout) {
+  _renderWorkoutMaker(workout, data) {
     L.marker(workout.coords)
       .addTo(this.#map)
       .bindPopup(
@@ -269,8 +289,8 @@ class App {
     });
   }
 
-  _setLocalStorage() {
-    localStorage.setItem('workouts', JSON.stringify(this.#workout));
+  _setLocalStorage(name, data) {
+    localStorage.setItem(name, JSON.stringify(data));
   }
 
   _getLocalStorage() {
@@ -281,6 +301,18 @@ class App {
     this.#workout = data;
 
     this.#workout.forEach(work => this._renderWorkout(work));
+  }
+
+  async _getwheather(lat, lon) {
+    try {
+      const res = await fetch(
+        `http://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}`
+      );
+      const data = await res.json();
+      return data;
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   _deleteWorkout(e) {
