@@ -15,11 +15,12 @@ class Workout {
   date = new Date();
   id = (Date.now() + '').slice(-5);
 
-  constructor(distance, duration, coords, temperature) {
+  constructor(distance, duration, coords, temperature, city) {
     this.distance = distance;
     this.duration = duration;
     this.coords = coords;
     this.temperature = temperature;
+    this.city = city;
   }
 
   _setDescription() {
@@ -34,8 +35,8 @@ class Workout {
 
 class Running extends Workout {
   type = 'running';
-  constructor(distance, duration, coords, temperature, cadence) {
-    super(distance, duration, coords, temperature);
+  constructor(distance, duration, coords, temperature, city, cadence) {
+    super(distance, duration, coords, temperature, city);
     this.cadence = cadence;
     this.calcPace();
     this._setDescription();
@@ -49,8 +50,8 @@ class Running extends Workout {
 
 class Cycling extends Workout {
   type = 'cycling';
-  constructor(distance, duration, coords, temperature, elevationGain) {
-    super(distance, duration, coords, temperature);
+  constructor(distance, duration, coords, temperature, city, elevationGain) {
+    super(distance, duration, coords, temperature, city);
     this.elevationGain = elevationGain;
     this.calcSpeed();
     this._setDescription();
@@ -132,9 +133,14 @@ class App {
     const distance = +inputDistance.value;
     const duration = +inputDuration.value;
     const { lat, lng } = this.#mapEvent.latlng;
-    const data = await this._getwheather(lat, lng);
+    const data = await this._AJAX(
+      `http://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&units=metric&appid=${API_KEY}`
+    );
     const temperature = data.main.temp;
-    console.log(data.main.temp);
+    const data2 = await this._AJAX(
+      `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`
+    );
+    const city = `${data2.locality}, ${data2.countryName}`;
     let workout;
 
     if (type === 'running') {
@@ -151,6 +157,7 @@ class App {
         duration,
         [lat, lng],
         temperature,
+        city,
         cadence
       );
     }
@@ -170,6 +177,7 @@ class App {
         duration,
         [lat, lng],
         temperature,
+        city,
         elevation
       );
     }
@@ -186,9 +194,6 @@ class App {
   }
 
   _renderWorkout(workout) {
-    // const work = sort
-    //   ? workout.sort((a, b) => a.distance - b.distance)
-    //   : workout;
     let html = ` 
     <li class="workout workout--${workout.type}" data-id="${workout.id}"> 
           <h2>${
@@ -242,7 +247,7 @@ class App {
     form.insertAdjacentHTML('afterend', html);
   }
 
-  _renderWorkoutMaker(workout, data) {
+  _renderWorkoutMaker(workout) {
     L.marker(workout.coords)
       .addTo(this.#map)
       .bindPopup(
@@ -255,14 +260,19 @@ class App {
         })
       )
       .setPopupContent(
-        `${workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'} ${workout.description}`
+        `${workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'} ${
+          workout.description
+        } in ${workout.city}`
       )
       .openPopup();
   }
 
   _hideForm() {
-    inputDistance.value = inputDuration.value = inputElevation.value = inputCadence.value =
-      '';
+    inputDistance.value =
+      inputDuration.value =
+      inputElevation.value =
+      inputCadence.value =
+        '';
 
     form.style.display = 'none';
     form.classList.add('hidden');
@@ -303,11 +313,9 @@ class App {
     this.#workout.forEach(work => this._renderWorkout(work));
   }
 
-  async _getwheather(lat, lon) {
+  async _AJAX(url) {
     try {
-      const res = await fetch(
-        `http://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}`
-      );
+      const res = await fetch(url);
       const data = await res.json();
       return data;
     } catch (err) {
@@ -318,7 +326,7 @@ class App {
   _deleteWorkout(e) {
     e.preventDefault();
     this.#workout.splice(0, 1);
-    this._setLocalStorage();
+    this._setLocalStorage('workouts', this.#workout);
     location.reload();
   }
 
