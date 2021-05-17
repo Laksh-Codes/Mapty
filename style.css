@@ -209,6 +209,12 @@ a {
   margin-left: 1rem;
 }
 
+/* Error Message */
+.error {
+  font-size: 2rem;
+  text-align: center;
+}
+
 /* MAP */
 #map {
   flex: 1;

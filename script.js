@@ -95,7 +95,6 @@ class App {
   _loadMap(position) {
     const { latitude } = position.coords;
     const { longitude } = position.coords;
-    // console.log(`https://www.google.com/maps/@${latitude},${longitude}`)`1q455re444`2  `q;
 
     const coords = [latitude, longitude];
 
@@ -317,9 +316,12 @@ class App {
     try {
       const res = await fetch(url);
       const data = await res.json();
+
+      if (!res.ok) throw new Error('Something Went Wrong!!!');
+
       return data;
     } catch (err) {
-      console.log(err);
+      this._renderError();
     }
   }
 
@@ -334,6 +336,14 @@ class App {
     this.#workout = [];
     localStorage.removeItem('workouts');
     location.reload();
+  }
+
+  _renderError() {
+    const html = `
+      <h2 class="error">❌❌ Something Went Wrong!!! ❌❌</h2>
+    `;
+    containerWorkouts.innerHTML = ``;
+    containerWorkouts.insertAdjacentHTML('beforeend', html);
   }
 }
 
